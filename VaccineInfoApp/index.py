@@ -109,8 +109,7 @@ def retrieveDbRecordsById(id : int):
                                              password='India@123') #move this to constants file.
     cursor = connection.cursor()
     queryStatement = (
-        "select A.*, B.doseDate, B.vaccineName, B.lotNumber "
-        "from tbcitizen A, tbvaccineinfo B "
+        "select A.*, B.doseDate, B.vaccineName, B.lotNumber from tbcitizen A, tbvaccineinfo B "
         "where A.citizenId = %s"
     )
     cursor.execute(queryStatement, id)

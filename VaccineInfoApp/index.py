@@ -1,6 +1,4 @@
 ################## imports ##########################################
-from ast import Str
-from datetime import date
 from fastapi import FastAPI
 from pydantic import BaseModel
 # from .config.database import connection
@@ -103,9 +101,24 @@ def createNewCitizenAndVaccineInfo(citizenInfoRequest : CitizenVaccineDetails):
 
     return citizenInfoRequest
  
-@app.get('/fetchVaccineInfoByCitizenId')
-def retrieveDbRecordsById():
-    pass   
+@app.get("/fetchVaccineInfoByCitizenId/{id}")
+def retrieveDbRecordsById(id : int):
+    connection = mysql.connector.connect(host='127.0.0.1',
+                                             database='citizenschema',
+                                             user='root',
+                                             password='India@123') #move this to constants file.
+    cursor = connection.cursor()
+    queryStatement = (
+        "select A.*, B.doseDate, B.vaccineName, B.lotNumber "
+        "from tbcitizen A, tbvaccineinfo B "
+        "where A.citizenId = %s"
+    )
+    cursor.execute(queryStatement, id)
+    for (cititzenId, firstName, lastName, phoneNumber,emailId,doseDate,VaccineName,lotNumber) in cursor:
+        print("{}, {} was vaccinated on {} {:%d %b %Y}".format(firstName, lastName, doseDate))
+
+    cursor.close()
+    connection.close()
 ################################################################
 
 ############################################################

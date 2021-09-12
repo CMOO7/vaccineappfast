@@ -114,21 +114,48 @@ def createNewCitizenAndVaccineInfo(citizenInfoRequest : CitizenVaccineDetails, t
  
 @app.get("/fetchVaccineInfoByCitizenId/{id}")
 def retrieveDbRecordsById(id : int):
-    connection = mysql.connector.connect(host='127.0.0.1',
-                                             database='citizenschema',
-                                             user='root',
-                                             password='India@123') #move this to constants file.
-    cursor = connection.cursor()
-    queryStatement = (
-        "select A.*, B.doseDate, B.vaccineName, B.lotNumber from tbcitizen A, tbvaccineinfo B "
-        "where A.citizenId = %s"
-    )
-    cursor.execute(queryStatement, id)
-    for (cititzenId, firstName, lastName, phoneNumber,emailId,doseDate,VaccineName,lotNumber) in cursor:
-        print("{}, {} was vaccinated on {} {:%d %b %Y}".format(firstName, lastName, doseDate))
+    try:
+        connection = mysql.connector.connect(host='127.0.0.1',
+                                                database='citizenschema',
+                                                user='root',
+                                                password='India@123') #move this to constants file.
+        cursor = connection.cursor()
+        queryStatement = ("""select * from tbcitizen where citizenId = %s""")
+        cursor.execute(queryStatement, (id,))
+        record = cursor.fetchall()
+        # global returnObj : CitizenVaccineDetails
+        
+        for row in record:
+            print("Id = ", row[0], )
+            print("FirstName = ", row[1])
+            print("Last name = ", row[2])
+            print("phone Number = ", row[3])
+            print("email Id  = ", row[4], "\n")
+            returnObj.citizenId = row[0]
+            returnObj.firstName = row[1]
+            returnObj.lastName = row[2]
+            returnObj.phoneNumber = row[3]
+            returnObj.emailId = row[4]
+        
+        anotherQueryStatement = ("""select * from tbvaccineinfo where citizenId = %s""")
+        cursor.execute(anotherQueryStatement, (id,))
+        record = cursor.fetchall()
+        # global returnObj : CitizenVaccineDetails
+        
+        for row in record:
+            print("Citizen Id = ", row[1], )
+            print("doseDate = ", row[2])
+            print("vaccineName = ", row[3])
+            print("lotNumber  = ", row[4])
 
-    cursor.close()
-    connection.close()
+    except mysql.connector.Error as error:
+        print("Failed to get record from MySQL table: {}".format(error))
+    
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+    # return returnObj
 
 @app.get("/items/")
 async def read_items(token: str = Depends(oauth2_scheme)):

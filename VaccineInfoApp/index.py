@@ -1,9 +1,8 @@
 ################## imports ##########################################
-from typing import Optional
+from typing import List, Optional
 from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from .config.database import fake_users_db
-# from routes.index import user
 import mysql.connector
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 ################# models ###########################################
@@ -21,10 +20,6 @@ class VaccineInfo(BaseModel):
     doseDate : str
     vaccineName : str
     lotNumber : str
-    # def __init__(self, doseDate:str , vaccineName:str, lotNumber:str):
-    #     self.doseDate = doseDate
-    #     self.vaccineName = vaccineName
-    #     self.lotNumber = lotNumber
 
 class CitizenVaccineDetails(BaseModel):
     citizenId :str
@@ -32,17 +27,7 @@ class CitizenVaccineDetails(BaseModel):
     lastName : str
     phoneNumber : str
     emailId : str
-    vaccineInfo1 : VaccineInfo
-    vaccineInfo2 : VaccineInfo
-
-    # def __init__(self, citizenId, firstName, lastName,phoneNumber,emailId):
-    #     self.citizenId = citizenId
-    #     self.firstName =  firstName
-    #     self.lastName = lastName
-    #     self.phoneNumber = phoneNumber
-    #     self.emailId = emailId
-        # self.vaccineInfo = vaccineInfo
-
+    vaccineInfo : List[VaccineInfo]
 
 #################### objects ########################################
 app =  FastAPI()
@@ -61,7 +46,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 #    ]
 # take vaccineInfo object from CitizenVaccineDetails.                                       #
 # create json string of attributes in VaccineInfo                                           #
-#                                                                                           #
+#  12/09                             
+# code cleaning,  packaging,  hardcoding to be fetched from config file.
+# extract methods. no code repition                                                            #
 #############################################################################################
 ################### routing methods ###################################
 @app.post('/createTbCitizenEntry')
@@ -89,17 +76,7 @@ def createNewCitizenAndVaccineInfo(citizenInfoRequest : CitizenVaccineDetails, t
         anotherRecord = (citizenInfoRequest.citizenId, secondVaccineInfo.doseDate, secondVaccineInfo.vaccineName, secondVaccineInfo.lotNumber)
         cursor.execute(second_insert_query, anotherRecord)
         connection.commit()
-        print("Record inserted successfully into tbvaccineinfo table")
-        
-        
-        # for vaccineInfoObj in vaccineInfoList:
-        #     second_insert_query = """INSERT INTO `tbvaccineinfo` (`citizenId`, `doseDate`,`vaccineName`,`lotNumber`) 
-        #     VALUES (%s, %s, %s, %s);"""
-        #     anotherRecord = (citizenInfoRequest.citizenId, vaccineInfoObj.doseDate, vaccineInfoObj.vaccineNumber, vaccineInfoObj.lotNumber)
-        #     cursor.execute(second_insert_query, anotherRecord)
-        #     connection.commit()
-        #     print("Record inserted successfully into tbvaccineinfo table")
-        
+        print("Record inserted successfully into tbvaccineinfo table")    
         cursor.close()
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
@@ -123,7 +100,6 @@ def retrieveDbRecordsById(id : int):
         queryStatement = ("""select * from tbcitizen where citizenId = %s""")
         cursor.execute(queryStatement, (id,))
         record = cursor.fetchall()
-        # global returnObj : CitizenVaccineDetails
         
         for row in record:
             print("Id = ", row[0], )
@@ -131,16 +107,12 @@ def retrieveDbRecordsById(id : int):
             print("Last name = ", row[2])
             print("phone Number = ", row[3])
             print("email Id  = ", row[4], "\n")
-            returnObj.citizenId = row[0]
-            returnObj.firstName = row[1]
-            returnObj.lastName = row[2]
-            returnObj.phoneNumber = row[3]
-            returnObj.emailId = row[4]
+
         
         anotherQueryStatement = ("""select * from tbvaccineinfo where citizenId = %s""")
         cursor.execute(anotherQueryStatement, (id,))
         record = cursor.fetchall()
-        # global returnObj : CitizenVaccineDetails
+
         
         for row in record:
             print("Citizen Id = ", row[1], )
@@ -155,12 +127,8 @@ def retrieveDbRecordsById(id : int):
         if connection.is_connected():
             cursor.close()
             connection.close()
-    # return returnObj
+###############################AUTHENTICA########################################
 
-@app.get("/items/")
-async def read_items(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
-################################################################
 
 def fake_hash_password(password: str):
     return "fakehashed" + password

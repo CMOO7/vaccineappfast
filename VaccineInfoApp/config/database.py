@@ -14,16 +14,16 @@
 
 fake_users_db = {
     "johndoe": {
-        "username": "umeshm",
-        "full_name": "Umesh MMMM",
-        "email": "umeshm@example.com",
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "email": "johndoe@example.com",
         "hashed_password": "fakehashedsecret",
         "disabled": False,
     },
     "alice": {
-        "username": "chinmay",
-        "full_name": "chinmay MMM",
-        "email": "chinmay@example.com",
+        "username": "alice",
+        "full_name": "Alice Wonderson",
+        "email": "alice@example.com",
         "hashed_password": "fakehashedsecret2",
         "disabled": True,
     },

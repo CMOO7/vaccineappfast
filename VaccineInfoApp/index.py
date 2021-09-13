@@ -9,8 +9,6 @@ from .schemas.VaccineSchemas import CitizenVaccineDetails,VaccineInfo
 from .models.userModels import User, UserInDB
 from .db.dbConnection import connection
 
-
-############################################################
 #################### objects ########################################
 app =  FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -41,33 +39,45 @@ def createNewCitizenAndVaccineInfo(citizenInfoRequest : CitizenVaccineDetails, t
             connection.close()
             print("MySQL connection is closed")
     return citizenInfoRequest
- 
+
+def processTbCitizenRecords(row):   
+    newObjToBeReturned = CitizenVaccineDetails
+    newObjToBeReturned.citizenId = row[0]
+    newObjToBeReturned.firstName = row[1]
+    newObjToBeReturned.lastName = row[2]
+    newObjToBeReturned.phoneNumber = row[3]
+    newObjToBeReturned.emailId = row[4]
+    return newObjToBeReturned
+
+def processTbVaccineInfoRecords(row):
+    vaccineInfoObj = VaccineInfo
+    vaccineInfoObj.doseDate = row[2]
+    vaccineInfoObj.vaccineName = row[3]
+    vaccineInfoObj.lotNumber = row[4]
+    return vaccineInfoObj
+
 @app.get("/fetchVaccineInfoByCitizenId/{id}")
 def retrieveDbRecordsById(id : int):
-    
+    """
+    input : iD (citizen Id)
+    output : return all the details of citizen including vaccine details taken.
+    fetches data from tables : TBCITIZEN, TBVACCINEINFO.
+    """
     try:
         cursor = connection.cursor()
         queryStatement = ("""select * from tbcitizen where citizenId = %s""")
         cursor.execute(queryStatement, (id,))
         record = cursor.fetchall()
-        
         for row in record:
-            returnObj : CitizenVaccineDetails
-            returnObj.citizenId = row[0]
-            print("Id = ", row[0], )
-            print("FirstName = ", row[1])
-            print("Last name = ", row[2])
-            print("phone Number = ", row[3])
-            print("email Id  = ", row[4], "\n")
-        
+            returnObj = processTbCitizenRecords(row)
         anotherQueryStatement = ("""select * from tbvaccineinfo where citizenId = %s""")
         cursor.execute(anotherQueryStatement, (id,))
         record = cursor.fetchall()
+        lst = []
         for row in record:
-            print("Citizen Id = ", row[1], )
-            print("doseDate = ", row[2])
-            print("vaccineName = ", row[3])
-            print("lotNumber  = ", row[4])
+            retVaccineInfo = processTbVaccineInfoRecords(row)
+            lst.append(retVaccineInfo)
+        returnObj.vaccineInfo = lst
 
     except mysql.connector.Error as error:
         print("Failed to get record from MySQL table: {}".format(error))
@@ -76,8 +86,10 @@ def retrieveDbRecordsById(id : int):
         if connection.is_connected():
             cursor.close()
             connection.close()
-    
-    return returnObject
+   
+    return returnObj
+
+
 ###############################AUTHENTICA########################################
 
 def fake_hash_password(password: str):
